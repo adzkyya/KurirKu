@@ -1,88 +1,88 @@
 #include <iostream>
-#include <vector>
-#include <queue>
-#include <limits>
 
 using namespace std;
 
-const int INF = numeric_limits<int>::max(); // Representasi nilai tak hingga
+const int INF = 1000000; // Representasi nilai tak hingga yang cukup besar
+const int MAX_NODES = 6; // Maksimum jumlah node
+
+// Fungsi untuk mencari index dari node dengan jarak minimum yang belum diproses
+int minDistance(int dist[], bool sptSet[])
+{
+    int min = INF, min_index;
+
+    for (int v = 0; v < MAX_NODES; v++)
+        if (!sptSet[v] && dist[v] <= min)
+            min = dist[v], min_index = v;
+
+    return min_index;
+}
+
+// Fungsi untuk mencetak jalur terpendek
+void printPath(int prev[], int j)
+{
+    if (prev[j] == -1)
+        return;
+    printPath(prev, prev[j]);
+    cout << " -> " << j;
+}
+
+// Fungsi untuk mencetak jarak terpendek
+void printSolution(int dist[], int prev[], int src, int dest)
+{
+    cout << "Jarak terpendek dari " << src << " ke " << dest << " adalah " << dist[dest] << endl;
+    cout << "Jalur terpendek: " << src;
+    printPath(prev, dest);
+    cout << endl;
+}
 
 // Fungsi untuk menjalankan algoritma Dijkstra
-void dijkstra(int src, vector<vector<pair<int, int>>> &adj, vector<int> &dist, vector<int> &prev)
+void dijkstra(int graph[MAX_NODES][MAX_NODES], int src, int dest)
 {
-    int n = adj.size();
-    dist.assign(n, INF);
-    prev.assign(n, -1);
-    dist[src] = 0;
-    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
-    pq.push({0, src});
+    int dist[MAX_NODES];
+    bool sptSet[MAX_NODES];
+    int prev[MAX_NODES];
 
-    while (!pq.empty())
+    for (int i = 0; i < MAX_NODES; i++)
     {
-        int u = pq.top().second;
-        pq.pop();
+        dist[i] = INF;
+        sptSet[i] = false;
+        prev[i] = -1;
+    }
 
-        for (const auto &edge : adj[u])
+    dist[src] = 0;
+
+    for (int count = 0; count < MAX_NODES - 1; count++)
+    {
+        int u = minDistance(dist, sptSet);
+        sptSet[u] = true;
+
+        for (int v = 0; v < MAX_NODES; v++)
         {
-            int v = edge.first;
-            int weight = edge.second;
-
-            if (dist[u] + weight < dist[v])
+            if (!sptSet[v] && graph[u][v] && dist[u] != INF && dist[u] + graph[u][v] < dist[v])
             {
-                dist[v] = dist[u] + weight;
+                dist[v] = dist[u] + graph[u][v];
                 prev[v] = u;
-                pq.push({dist[v], v});
             }
         }
     }
-}
 
-// Fungsi untuk membangun jalur dari source ke target
-vector<int> build_path(int target, vector<int> &prev)
-{
-    vector<int> path;
-    for (int at = target; at != -1; at = prev[at])
-        path.push_back(at);
-    reverse(path.begin(), path.end());
-    return path;
+    printSolution(dist, prev, src, dest);
 }
 
 int main()
 {
-    // Definisi graf
-    int num_nodes = 6; // Misalnya kita punya 6 titik dalam graf
-    vector<vector<pair<int, int>>> adj(num_nodes);
-
-    // Misalnya kita tambahkan beberapa edge (u, v, w) di sini
-    // Format: adj[u].push_back({v, w});
-    adj[0].push_back({1, 10});
-    adj[0].push_back({2, 15});
-    adj[1].push_back({3, 12});
-    adj[2].push_back({4, 10});
-    adj[3].push_back({4, 2});
-    adj[3].push_back({5, 1});
-    adj[4].push_back({5, 5});
+    int graph[MAX_NODES][MAX_NODES] = {
+        {0, 10, 15, 0, 0, 0},
+        {0, 0, 0, 12, 0, 0},
+        {0, 0, 0, 0, 10, 0},
+        {0, 0, 0, 0, 2, 1},
+        {0, 0, 0, 0, 0, 5},
+        {0, 0, 0, 0, 0, 0}};
 
     int src = 0;  // Misalnya titik awal adalah 0 (UPI Cibiru)
     int dest = 5; // Misalnya titik tujuan adalah 5 (UPI Setiabudi)
 
-    vector<int> dist;
-    vector<int> prev;
-    dijkstra(src, adj, dist, prev);
-
-    // Mencetak jarak terpendek dari src ke dest
-    cout << "Jarak terpendek dari " << src << " ke " << dest << " adalah " << dist[dest] << endl;
-
-    // Membangun dan mencetak jalur terpendek
-    vector<int> path = build_path(dest, prev);
-    cout << "Jalur terpendek: ";
-    for (int i = 0; i < path.size(); ++i)
-    {
-        if (i > 0)
-            cout << " -> ";
-        cout << path[i];
-    }
-    cout << endl;
+    dijkstra(graph, src, dest);
 
     return 0;
 }
